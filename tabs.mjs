@@ -2,6 +2,12 @@ import { hasPart } from "./parts.mjs";
 import { addPart } from "./parts.mjs";
 import { removePart } from "./parts.mjs";
 
+export function setModulePath(path)
+{
+    module_path = path;
+}
+var module_path = ".";
+
 /** 
  * @type {HTMLElement}
  * @private @global
@@ -19,7 +25,7 @@ export default class extends HTMLElement
         const style = document.createElement("link");
         style.rel = "stylesheet";
         style.type = "text/css";
-        style.href = "./tabs.css";
+        style.href = module_path + "/tabs.css";
         const root = document.createElement("div");
         root.id = "shadow-top";
         const tabs = document.createElement("div");
