@@ -1,0 +1,41 @@
+tab-container {
+    display: block;
+    height: 50%;
+}
+::part(tab) {
+    background: #555;
+    color: #999;
+    padding: 4px 10px 7px;
+    border-top: 2px solid #333;
+    border-right: 2px solid #333; 
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+::part(tab active) {
+    background: #7e7e7e;
+    color: #fff;
+    border-top: 2px solid #44f;
+    border-left: 1px solid #44f;
+    border-right: 1px solid #44f;
+    margin-top: 1px;
+}
+::part(tab dragover)        { background: #777; }
+::part(tab active dragover) { background: #999; }
+::part(tab-bar)             { background: #333; }
+::part(tab-bar dragover)    { background: #555; }
+::part(contents) {
+    background: #7e7e7e;
+    color: #fff;
+}
+::part(close active)::before {
+    content: "×";
+    color: #ddd;
+    margin-left: 10px;
+}
+::part(close active):hover::before { color: #fff; }
+body {
+    margin: 0;
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+}
