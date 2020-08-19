@@ -1,12 +1,41 @@
-import { hasPart } from "./parts.mjs";
-import { addPart } from "./parts.mjs";
-import { removePart } from "./parts.mjs";
+import { hasPart, addPart, removePart } from "./parts.mjs";
 
-export function setModulePath(path)
-{
-    module_path = path;
+const css = `
+#shadow-top {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
-var module_path = ".";
+#tabs {
+    flex: 0 0;
+    user-select: none;
+}
+#tabs > * {
+    display: inline-block;
+    cursor: pointer;
+}
+#tabs > span:first-child {
+    margin-left: 0px !important;
+}
+#tabs::after {
+    display: block;
+    float: right;
+    content: "0";
+    visibility: hidden;
+}
+#contents {
+    position: relative;
+    flex: 1 1;
+}
+#contents > * {
+    position: absolute;
+    display: none;
+    top: 0; left: 0; right: 0; bottom: 0;
+}
+#contents > *.active {
+    display: block;
+}
+`;
 
 /** 
  * @type {HTMLElement}
@@ -22,10 +51,8 @@ export default class extends HTMLElement
         this.next_id = 0;
         // === Build shadow tree ===
         const shadow = this.attachShadow({ mode: "open" });
-        const style = document.createElement("link");
-        style.rel = "stylesheet";
-        style.type = "text/css";
-        style.href = module_path + "/tabs.css";
+        const stylesheet = document.createElement("style");
+        stylesheet.append(css);
         const root = document.createElement("div");
         root.id = "shadow-top";
         const tabs = document.createElement("div");
@@ -47,7 +74,7 @@ export default class extends HTMLElement
         contents.id = "contents";
         contents.setAttribute("part", "contents");
         root.append(tabs, contents)
-        shadow.append(style, root);
+        shadow.append(stylesheet, root);
         // === Register all children ===
         for (let child of this.childNodes)
         {
