@@ -6,7 +6,7 @@
  */
 export function hasPart(element, part)
 {
-    const attr = element.getAttribute("part");
+    const attr = element?.getAttribute("part");
     return attr != null && attr.split(" ").includes(part);
 }
 
@@ -37,6 +37,7 @@ export function addPart(element, part)
  */
 export function removePart(element, part)
 {
+    if (!hasPart(element, part)) return;
     var part_attr = element.getAttribute("part");
     part_attr = part_attr.split(" ").filter(x => x != part).join(" ");
     element.setAttribute("part", part_attr);
