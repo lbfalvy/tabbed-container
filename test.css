@@ -23,9 +23,13 @@ tab-container {
 ::part(tab active dragover) { background: #999; }
 ::part(tab-bar)             { background: #333; }
 ::part(tab-bar dragover)    { background: #555; }
-::part(contents) {
+tab-container > * {
     background: #7e7e7e;
     color: #fff;
+    display: none;
+}
+tab-container > *[active] {
+    display: block;
 }
 ::part(close active)::before {
     content: "×";
