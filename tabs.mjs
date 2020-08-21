@@ -47,7 +47,6 @@ const css = `
 }
 `;
 
-
 export default class extends HTMLElement {
     constructor() {
         super();
@@ -96,14 +95,15 @@ export default class extends HTMLElement {
         ev.preventDefault();
         /** @type {Element} */
         const tabs = ev.currentTarget;
-        const container = tabs.getRootNode().host;
+        const host = tabs.getRootNode().host;
         removePart(tabs, "dragover");
 
         // Get the dragged content element
         const content = document.querySelector(`[data-uid="${uid}"]`);
-        // If it was active, select the first one
+        // If it was active, select the first one on the old container
         if (content.hasAttribute("active")) {
-            setTimeout(() => content.parentElement.selectTab(0), 0);
+            const oldHost = content.parentElement;
+            setTimeout(() => oldHost.selectTab(0), 0);
         }
 
         // Get the index at which it is to be inserted
@@ -114,14 +114,25 @@ export default class extends HTMLElement {
             i++;                                      // increment the index
         
         // Insert the content
-        container.insertBefore(content, container.children[i]);
+        host.insertBefore(content, host.children[i]);
         // Select this tab after the tab-bar had been updated
-        setTimeout(() => this.selectTab(i), 0);
+        setTimeout(() => host.selectTab(i), 0);
+    }
+
+    onContainerEmpty() {
+        this.dispatchEvent(new CustomEvent("empty", {
+            bubbles: true
+        }));
     }
 
     selectTab(tab) {
-        if (typeof tab == "number") tab = this.tabs.children[tab];
-        if (!tab) return;
+        if (typeof tab == "number") {
+            tab = this.tabs.children[tab];
+            if (!tab)
+                throw new RangeError("Tab index out of range");
+        }
+        else if (!tab) 
+            throw new RangeError("Can't select null");
         removePart(this.tabs.querySelector(`[part~="active"]`), "active");
         this.querySelector(`[active]`)?.removeAttribute("active");
         addPart(tab, "active");
@@ -142,6 +153,7 @@ export default class extends HTMLElement {
         this.tabs.innerHTML = "";
         this.content_watcher.disconnect();
         this.content_watcher.observe(this, { childList: true});
+        if (this.childElementCount == 0) this.onContainerEmpty();
         for (const child of this.children) {
             this.constructTab(child);
             this.content_watcher.observe(child, { 
