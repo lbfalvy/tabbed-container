@@ -77,12 +77,19 @@ export default class extends HTMLElement {
 
     /** @param {DragEvent} ev */
     onTabGrab(ev) {
-        // Accept the event
-        ev.stopPropagation();
-        // Ensure it has an uid
-        var uid = this.getContentForTab(ev.currentTarget).getAttribute("data-uid");
+        // Get the uid
+        const content = this.getContentForTab(ev.currentTarget);
+        var uid = content.getAttribute("data-uid");
+        if (uid === null) {
+            uid = getUid();
+            content.setAttribute("data-uid", uid);
+        }
         // Send the uid with the drag event
         ev.dataTransfer.setData("tabs/uid", uid);
+        this.dispatchEvent(new CustomEvent("tabdragstart", {
+            bubbles: true,
+            detail: { uid }
+        }));
     };
 
     /** @param {DragEvent} ev */
@@ -100,11 +107,6 @@ export default class extends HTMLElement {
 
         // Get the dragged content element
         const content = document.querySelector(`[data-uid="${uid}"]`);
-        // If it was active, select the first one on the old container
-        if (content.hasAttribute("active")) {
-            const oldHost = content.parentElement;
-            setTimeout(() => oldHost.selectTab(0), 0);
-        }
 
         // Get the index at which it is to be inserted
         var i = 0;
@@ -116,7 +118,7 @@ export default class extends HTMLElement {
         // Insert the content
         host.insertBefore(content, host.children[i]);
         // Select this tab after the tab-bar had been updated
-        setTimeout(() => host.selectTab(i), 0);
+        setTimeout(() => host.selectTab(content), 0);
     }
 
     onContainerEmpty() {
@@ -125,14 +127,28 @@ export default class extends HTMLElement {
         }));
     }
 
-    selectTab(tab) {
-        if (typeof tab == "number") {
-            tab = this.tabs.children[tab];
-            if (!tab)
+    getTabFromArg(arg) {
+        // If it's an index, select the nth tab.
+        if (typeof arg == "number") {
+            arg = this.tabs.children[arg];
+            if (!arg)
                 throw new RangeError("Tab index out of range");
         }
-        else if (!tab) 
+        // If it's a content, change to the relevant tab
+        else if (arg.parentElement == this) {
+            var handle = this.tabs.firstElementChild;
+            while (arg = arg.previousElementSibling)
+                handle = handle.nextElementSibling;
+            arg = handle;
+        }
+        // If it's null or undefined, throw
+        else if (!arg) 
             throw new RangeError("Can't select null");
+        return arg;
+    }
+
+    selectTab(tab) {
+        tab = this.getTabFromArg(tab);
         removePart(this.tabs.querySelector(`[part~="active"]`), "active");
         this.querySelector(`[active]`)?.removeAttribute("active");
         addPart(tab, "active");
@@ -140,6 +156,7 @@ export default class extends HTMLElement {
     }
 
     closeTab(tab) {
+        tab = this.getTabFromArg(tab);
         this.getContentForTab(tab).remove();
     }
 
@@ -153,14 +170,21 @@ export default class extends HTMLElement {
         this.tabs.innerHTML = "";
         this.content_watcher.disconnect();
         this.content_watcher.observe(this, { childList: true});
-        if (this.childElementCount == 0) this.onContainerEmpty();
+        var shouldSelectFirst = true;
+        if (this.childElementCount == 0) {
+            this.onContainerEmpty();
+            shouldSelectFirst = false;
+        }
         for (const child of this.children) {
             this.constructTab(child);
             this.content_watcher.observe(child, { 
                 attributes: true, 
                 attributeFilter: ["data-title"] 
             });
+            if (child.hasAttribute("active")) 
+                shouldSelectFirst = false;
         }
+        if (shouldSelectFirst) this.selectTab(0);
     }
 
     constructTab(content) {
@@ -177,7 +201,7 @@ export default class extends HTMLElement {
         tab.onclick = ev => {
             ev.stopPropagation();
             const host = ev.currentTarget.getRootNode().host;
-            host.selectTab(tab);
+            host.selectTab(ev.currentTarget);
         };
         
         // === Drag events ===
