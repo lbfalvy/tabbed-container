@@ -47,7 +47,7 @@ const css = `
 }
 `;
 
-export default class extends HTMLElement {
+export default class TabContainer extends HTMLElement {
     constructor() {
         super();
         // === Build shadow dom ===
@@ -227,3 +227,5 @@ export default class extends HTMLElement {
         };
     }
 }
+
+customElements.define("tab-container", TabContainer);
